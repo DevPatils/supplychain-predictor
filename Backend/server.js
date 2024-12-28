@@ -7,6 +7,8 @@ const fs = require('fs');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 // app.use(bodyParser.json());
+const cors=require('cors');
+app.use(cors());
 
 
 // Middleware to parse incoming JSON requests
@@ -19,30 +21,6 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // Define the API route
-app.post('/predict-supply-chain', async (req, res) => {
-  const { productName } = req.body;
-
-  if (!productName) {
-    return res.status(400).json({ error: 'Product name is required' });
-  }
-
-  try {
-
-    // Prepare the prompt for the Generative AI model
-    const prompt = `Given the product name '${productName}', predict the supply chain process for this product .`;
-
-    // Call the `generateContent()` method with the prompt
-    const result = await model.generateContent([prompt]);
-
-    // Extract and send the result back
-    res.json({
-      supplyChainPrediction: result.response.text() || 'No prediction returned',
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error predicting the supply chain' });
-  }
-});
 
 app.post('/predictimage', upload.single('image'), async (req, res) => {
   const { file } = req;
