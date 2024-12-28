@@ -1,27 +1,50 @@
-require('dotenv').config();  // Load environment variables from .env file
-const express = require('express');
-const { GoogleGenerativeAI } = require('@google/generative-ai');  // Correct import
+import dotenv from 'dotenv';
+import express from 'express';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { readFileSync } from 'fs'; 
+import multer from 'multer';
+import passport from './passportConfig.js';
+import cors from 'cors';
+
 const app = express();
 const port = 3000;
-const fs = require('fs');
-const multer = require('multer');
+dotenv.config();
+
 const upload = multer({ dest: 'uploads/' });
-// app.use(bodyParser.json());
-const cors=require('cors');
+
 app.use(cors());
-
-
-// Middleware to parse incoming JSON requests
 app.use(express.json());
+app.use(passport.initialize());
 
-// Initialize Google Generative AI client with your API key
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-// Get the generative model using the correct method
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-// Define the API route
+/**
+ * @desc Google auth routes
+ */
+app.get("/google", passport.authenticate("google-qr", {
+  scope: ["profile", "email"]
+}));
 
+app.get('/google/dashboard/callback/qrApp', passport.authenticate('google-qr', {
+  session: false,
+  failureRedirect: "/login",
+}),
+  async (req, res) => {
+    try {
+      console.log(req.user.profile)
+      console.log('logged in');
+    } catch (e) {
+      console.log(e);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  },
+);
+
+/**
+ * @desc predict image route
+ */
 app.post('/predictimage', upload.single('image'), async (req, res) => {
   const { file } = req;
 
@@ -31,7 +54,7 @@ app.post('/predictimage', upload.single('image'), async (req, res) => {
 
   const image = {
     inlineData: {
-      data: Buffer.from(fs.readFileSync(file.path)).toString('base64'),
+      data: Buffer.from(readFileSync(file.path)).toString('base64'),
       mimeType: 'image/jpg',
     },
   };
@@ -51,11 +74,8 @@ app.post('/predictimage', upload.single('image'), async (req, res) => {
   };
   console.log(keyPoints);
   res.json(keyPoints);
-
 });
 
-
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
