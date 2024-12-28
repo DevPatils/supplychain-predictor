@@ -1,5 +1,6 @@
-node_modules
 
 # exclude .env
 .env
 uploads/
+
+node_modules/
