@@ -34,6 +34,7 @@ app.get('/google/dashboard/callback/qrApp', passport.authenticate('google-qr', {
   async (req, res) => {
     try {
       console.log(req.user.profile)
+      res.redirect(`https//localhost:8081/Index`);
       console.log('logged in');
     } catch (e) {
       console.log(e);
