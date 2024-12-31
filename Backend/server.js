@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { readFileSync } from 'fs'; 
+import { readFileSync } from 'fs';
 import multer from 'multer';
 import passport from './passportConfig.js';
 import cors from 'cors';
@@ -67,22 +67,113 @@ app.post('/predictimage', upload.single('image'), async (req, res) => {
     },
   };
 
-  const prompt = `Given the image below, predict the supply chain process for this product. Provide:
-  1. A reasonable estimated range of carbon emissions (in kg CO₂e) for the production and transportation of the product.
-  2. Key assumptions and factors influencing the estimate (e.g., manufacturing, transportation, energy usage).
-  3. Any recommendations to reduce the carbon footprint for this type of product.`;
+  const prompt = `Analyze the provided product image and generate a detailed response in JSON format. Extract the following information:
+
+Product Details:
+
+Name: The identified product name or category.
+Size: Physical dimensions or volume (e.g., "500ml", "30cm x 20cm").
+Type: The product's category or function (e.g., "single-use bottle", "smartphone").
+Material: The materials used in the product (e.g., "PET plastic", "stainless steel").
+Cost: Estimated price in INR based on typical market values in India.
+Supply Chain Details:
+
+Raw Materials: Likely materials and their probable sources or origin regions (e.g., petroleum-based plastics from Saudi Arabia, cotton from Gujarat, India).
+Manufacturing: Common manufacturing processes and typical hubs in India (e.g., injection molding in Noida, Uttar Pradesh).
+Distribution: Typical distribution channels or retail points in India, such as wholesalers, e-commerce platforms, or local markets.
+Ensure the response is accurate, formatted as a complete JSON object, and relevant for any product type provided via the image input.`;
 
   const result = await model.generateContent([prompt, image]);
-  const fullResponse = result.response.text();
+  // const fullResponse = result.response.text();
 
-  const keyPoints = {
-    supplyChainProcess: fullResponse.match(/1\..+?(?=\d\.)/s)?.[0].trim(),
-    carbonEmissionsEstimate: fullResponse.match(/2\..+?(?=\d\.)/s)?.[0].trim(),
-    recommendations: fullResponse.match(/3\..+/s)?.[0].trim(),
-  };
-  console.log(keyPoints);
-  res.json(keyPoints);
+  // const keyPoints = {
+  //   supplyChainProcess: fullResponse.match(/1\..+?(?=\d\.)/s)?.[0].trim(),
+  //   carbonEmissionsEstimate: fullResponse.match(/2\..+?(?=\d\.)/s)?.[0].trim(),
+  //   recommendations: fullResponse.match(/3\..+/s)?.[0].trim(),
+  // };
+  // console.log(keyPoints);
+  console.log(result.response.text());
+  res.json(result);
+  
 });
+
+
+app.post('/metricsImage', async (req, res) => {
+  const { name, size, type, material, cost } = req.body;
+
+  const prompt = `${name} is a ${size} ${type} made of ${material} that costs INR ${cost}.
+    Based on the provided product details, calculate the environmental benefits of recycling this product. Use the following metrics:
+    - Carbon Emissions Saved: Estimate the reduction in CO₂ emissions (e.g., in kilograms).
+    - Trees Saved: Approximate the number of trees preserved due to recycling.
+    - Water Saved: Estimate the liters of water conserved.
+    - Energy Saved: Approximate energy savings (e.g., in kilowatt-hours).
+    - Landfill Space Saved: Estimate the landfill volume saved (e.g., in cubic meters).
+
+    Use the product details provided in the input to make relevant estimations and ensure the response is accurate, detailed, and formatted as a complete JSON object.
+  `;
+
+  // const input = {
+  //   name,
+  //   size,
+  //   type,
+  //   material,
+  //   cost,
+  // };
+
+  
+    const result = await model.generateContent([prompt ]);
+      
+
+
+    
+
+   res.send(result.response.text());
+  //  console.log(result);
+  //  res.json(result);
+  
+
+});
+
+app.post('/recyclingMethods', async (req, res) => {
+  const { name, size, type, material, cost } = req.body;
+
+  const prompt = `
+    Given the following product details, provide creative and practical recycling methods. For each method, include a description and step-by-step instructions. The recycling methods should be unique and tailored to the specific product details. Ensure the response is structured as a detailed JSON object with the following keys:
+
+    - "product_name": The name of the product.
+    - "recycling_methods": An array of methods, where each method includes:
+      - "method_name": The title of the recycling idea.
+      - "description": A brief explanation of what the method achieves.
+      - "steps": A step-by-step guide for implementing the recycling method.
+
+    Input product details:
+    {
+      "name": "${name}",
+      "size": "${size}",
+      "type": "${type}",
+      "material": "${material}",
+      "cost": { "estimated_range_INR": "${cost.estimated_range_INR}" }
+    }
+
+    Provide the response as a JSON object that is accurate, creative, and detailed.
+  `;
+
+  try {
+    // Call the model's generateContent function
+    const result = await model.generateContent([
+      prompt]);
+
+    // Return the result as JSON
+    res.send(result.response.text());
+  } catch (error) {
+    console.error('Error generating recycling methods:', error);
+    res.status(500).json({ error: 'Failed to generate recycling methods.' });
+  }
+});
+
+
+
+
 
 app.use("/user", userRouter);
 
