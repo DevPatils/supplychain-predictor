@@ -5,15 +5,20 @@ import { readFileSync } from 'fs';
 import multer from 'multer';
 import passport from './passportConfig.js';
 import cors from 'cors';
+import connectDB from './dbconfig.js';
+import { userRouter } from './routes/User.js';
+
 
 const app = express();
 const port = 3000;
 dotenv.config();
+connectDB();
 
 const upload = multer({ dest: 'uploads/' });
 
 app.use(cors());
 app.use(express.json());
+
 app.use(passport.initialize());
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
@@ -46,6 +51,8 @@ app.get('/google/dashboard/callback/qrApp', passport.authenticate('google-qr', {
 /**
  * @desc predict image route
  */
+
+
 app.post('/predictimage', upload.single('image'), async (req, res) => {
   const { file } = req;
 
@@ -76,6 +83,11 @@ app.post('/predictimage', upload.single('image'), async (req, res) => {
   console.log(keyPoints);
   res.json(keyPoints);
 });
+
+app.use("/user", userRouter);
+
+
+
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
