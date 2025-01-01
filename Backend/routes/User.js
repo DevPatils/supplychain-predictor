@@ -69,5 +69,45 @@ userRouter.get('/protected', authenticate, (req, res) => {
     res.status(200).json({ message: 'This is a protected route', user: req.user });
 });
 
-// module.exports = {userRouter, authenticate};
+
+userRouter.get('/profile', authenticate, async (req, res) => {
+    try {
+        const user = await userModel.findById(req.user.id);
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+        res.status(200).json({ user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching user profile', error });
+    }
+});
+
+userRouter.put('/profile', authenticate, async (req, res) => {
+    const { name, email, password } = req.body;
+
+    try {
+        const user = await userModel.findByIdAndUpdate(
+            req.user.id,
+            { name, email, password },
+            { new: true, runValidators: true }
+        );
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+        res.status(200).json({ message: 'Profile updated', user });
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating profile', error });
+    }
+});
+
+
+
+userRouter.get('/logout', (req, res) => {
+    res.clearCookie('token'); 
+
+  res.status(200).json({ message: 'Logged out successfully' });
+});
+
 export { userRouter, authenticate };
