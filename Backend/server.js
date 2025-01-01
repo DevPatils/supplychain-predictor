@@ -67,7 +67,7 @@ app.post('/predictimage', upload.single('image'), async (req, res) => {
     },
   };
 
-  const prompt = `Analyze the provided product image and generate a detailed response in JSON format. Extract the following information:
+  const prompt = `Analyze the provided product image and generate a detailed response in JSON. Extract the following information:
 
 Product Details:
 
@@ -81,19 +81,15 @@ Supply Chain Details:
 Raw Materials: Likely materials and their probable sources or origin regions (e.g., petroleum-based plastics from Saudi Arabia, cotton from Gujarat, India).
 Manufacturing: Common manufacturing processes and typical hubs in India (e.g., injection molding in Noida, Uttar Pradesh).
 Distribution: Typical distribution channels or retail points in India, such as wholesalers, e-commerce platforms, or local markets.
-Ensure the response is accurate, formatted as a complete JSON object, and relevant for any product type provided via the image input.`;
+Ensure the response is accurate,  JSON object, and relevant for any product type provided via the image input.`;
 
   const result = await model.generateContent([prompt, image]);
-  // const fullResponse = result.response.text();
-
-  // const keyPoints = {
-  //   supplyChainProcess: fullResponse.match(/1\..+?(?=\d\.)/s)?.[0].trim(),
-  //   carbonEmissionsEstimate: fullResponse.match(/2\..+?(?=\d\.)/s)?.[0].trim(),
-  //   recommendations: fullResponse.match(/3\..+/s)?.[0].trim(),
-  // };
-  // console.log(keyPoints);
-  console.log(result.response.text());
-  res.json(result);
+  const cleanedResponse = result.response.text()
+  .replaceAll('```', '')
+  .replaceAll('json', '');
+  console.log(cleanedResponse);
+  // console.log(result.response.text());
+  res.json(cleanedResponse);
   
 });
 
@@ -112,26 +108,9 @@ app.post('/metricsImage', async (req, res) => {
     Use the product details provided in the input to make relevant estimations and ensure the response is accurate, detailed, and formatted as a complete JSON object.
   `;
 
-  // const input = {
-  //   name,
-  //   size,
-  //   type,
-  //   material,
-  //   cost,
-  // };
-
-  
     const result = await model.generateContent([prompt ]);
-      
-
-
-    
 
    res.send(result.response.text());
-  //  console.log(result);
-  //  res.json(result);
-  
-
 });
 
 app.post('/recyclingMethods', async (req, res) => {
