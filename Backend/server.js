@@ -114,7 +114,7 @@ app.post('/metricsImage', async (req, res) => {
 
     // Clean and parse the response into JSON
     const cleanedResponse = rawResponse
-      .replaceAll('', '')
+      .replaceAll('```', '')
       .replaceAll('json', '')
       .trim(); // Remove unwanted characters or extra spaces
 
