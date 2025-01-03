@@ -19,7 +19,7 @@ userRouter.post('/signUp', async (req, res) => {
         }
 
         const user = await userModel.create({ name, email, password });
-        const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET);
         res.status(201).json({ message: 'User created', user, token });
     } catch (error) {
         res.status(500).json({ message: 'Error creating user', error });
@@ -49,8 +49,8 @@ userRouter.post('/login', async (req, res) => {
 });
 
 // Middleware to verify JWT
- const authenticate = (req, res, next) => {
-    const token = req.headers.authorization; // Expected format: "Bearer <token>"
+const authenticate = (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1]; // Expected format: "Bearer <token>"
     if (!token) {
         res.status(401).json({ message: 'Authorization token missing' });
         return;
@@ -65,49 +65,19 @@ userRouter.post('/login', async (req, res) => {
     }
 };
 
+// Profile endpoints
+userRouter.get('/profile',(req,res) => {
+
+})
+
+
 userRouter.get('/protected', authenticate, (req, res) => {
     res.status(200).json({ message: 'This is a protected route', user: req.user });
 });
 
-
-userRouter.get('/profile', authenticate, async (req, res) => {
-    try {
-        const user = await userModel.findById(req.user.id);
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-        res.status(200).json({ user });
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching user profile', error });
-    }
-});
-
-userRouter.put('/profile', authenticate, async (req, res) => {
-    const { name, email, password } = req.body;
-
-    try {
-        const user = await userModel.findByIdAndUpdate(
-            req.user.id,
-            { name, email, password },
-            { new: true, runValidators: true }
-        );
-        if (!user) {
-            res.status(404).json({ message: 'User not found' });
-            return;
-        }
-        res.status(200).json({ message: 'Profile updated', user });
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating profile', error });
-    }
-});
-
-
-
 userRouter.get('/logout', (req, res) => {
-    res.clearCookie('token'); 
-
-  res.status(200).json({ message: 'Logged out successfully' });
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logged out successfully' });
 });
 
 export { userRouter, authenticate };
