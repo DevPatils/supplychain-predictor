@@ -108,15 +108,22 @@ app.post('/metricsImage', async (req, res) => {
     Use the product details provided in the input to make relevant estimations and ensure the response is accurate, detailed, and formatted as a complete JSON object.
   `;
 
-    const result = await model.generateContent([prompt ]);
-    const cleanedResponse = result.response.text()
-  .replaceAll('```', '')
-  .replaceAll('json', '');
-  console.log(cleanedResponse);
-  // console.log(result.response.text());
-  res.json(cleanedResponse);
-  
+  try {
+    const result = await model.generateContent([prompt]);
+    const rawResponse = result.response.text();
 
+    // Clean and parse the response into JSON
+    const cleanedResponse = rawResponse
+      .replaceAll('', '')
+      .replaceAll('json', '')
+      .trim(); // Remove unwanted characters or extra spaces
+
+    const jsonResponse = JSON.parse(cleanedResponse); // Parse into JSON
+    res.json(jsonResponse); // Send the structured JSON to the frontend
+  } catch (error) {
+    console.error('Error processing request:', error);
+    res.status(500).json({ error: 'Failed to process the request' });
+  }
 });
 
 
