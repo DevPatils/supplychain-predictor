@@ -95,29 +95,71 @@ Ensure the response is accurate,  JSON object, and relevant for any product type
 
 
 app.post('/metricsImage', async (req, res) => {
-  const { name, size, type, material, cost } = req.body;
+  const { name, size, type, material } = req.body;
 
-  const prompt = `${name} is a ${size} ${type} made of ${material} that costs INR ${cost}.
-    Based on the provided product details, calculate the environmental benefits of recycling this product. Use the following metrics:
-    - Carbon Emissions Saved: Estimate the reduction in CO₂ emissions (e.g., in kilograms).
-    - Trees Saved: Approximate the number of trees preserved due to recycling.
-    - Water Saved: Estimate the liters of water conserved.
-    - Energy Saved: Approximate energy savings (e.g., in kilowatt-hours).
-    - Landfill Space Saved: Estimate the landfill volume saved (e.g., in cubic meters).
-
-    Use the product details provided in the input to make relevant estimations and ensure the response is accurate, detailed, and formatted as a complete JSON object.
-  `;
-
-    const result = await model.generateContent([prompt ]);
-    const cleanedResponse = result.response.text()
-  .replaceAll('```', '')
-  .replaceAll('json', '');
-  console.log(cleanedResponse);
-  // console.log(result.response.text());
-  res.json(cleanedResponse);
+  const prompt = `${name} is a ${size} ${type} made of ${material}. 
+  Based on the provided product details, calculate the environmental benefits of recycling this product. Use the following metrics to estimate the impact:
   
+  - **Carbon Emissions Saved**: Estimate the reduction in CO₂ emissions (e.g., in kilograms). Use typical values for PVC production and recycling.
+  - **Trees Saved**: Approximate the number of trees preserved due to recycling. Consider the general resource consumption of PVC production and recycling.
+  - **Water Saved**: Estimate the liters of water conserved by recycling, based on the average water usage in PVC production.
+  - **Energy Saved**: Approximate energy savings (e.g., in kilowatt-hours) from recycling, considering energy savings from using recycled material instead of virgin PVC.
+  - **Landfill Space Saved**: Estimate the landfill volume saved (e.g., in cubic meters) by recycling this product.
+  
+  Note: While precise calculations require specific data such as the weight of the PVC pipe, the manufacturing and recycling process details, and the environmental impact of virgin material production, this estimation will be based on average industry values for PVC products. The values provided should be considered rough estimates and not exact calculations.
+  
+  Provide the response in the following JSON format:
+  {
+    "product": "${name}",
+    "environmental_benefits": {
+      "carbon_emissions_saved": {
+        "estimate": [estimated value],
+        "unit": "kg",
+        "explanation": "Rough estimate based on the average carbon footprint of PVC production and recycling."
+      },
+      "trees_saved": {
+        "estimate": [estimated value],
+        "unit": "trees",
+        "explanation": "Rough estimate based on typical tree usage in PVC production and recycling."
+      },
+      "water_saved": {
+        "estimate": [estimated value],
+        "unit": "liters",
+        "explanation": "Rough estimate based on average water usage in PVC production and recycling."
+      },
+      "energy_saved": {
+        "estimate": [estimated value],
+        "unit": "kWh",
+        "explanation": "Rough estimate based on energy savings from recycling PVC instead of producing virgin material."
+      },
+      "landfill_space_saved": {
+        "estimate": [estimated value],
+        "unit": "cubic meters",
+        "explanation": "Rough estimate based on average volume reduction from recycling PVC products."
+      },
+      "disclaimer": "These environmental benefits are rough estimates based on average industry values. Accurate estimations require more specific data on the product's composition, weight, and the details of the manufacturing and recycling processes."
+    }
+  }`
+  ;
 
+  try {
+    const result = await model.generateContent([prompt]);
+    const rawResponse = result.response.text();
+    // console.log(rawResponse);
+    // Clean and parse the response into JSON
+    const cleanedResponse = rawResponse
+      .replaceAll('```', '')
+      .replaceAll('json', '')
+      .trim(); // Remove unwanted characters or extra spaces
+    console.log(cleanedResponse);
+    const jsonResponse = JSON.parse(cleanedResponse); // Parse into JSON
+    res.json(jsonResponse); // Send the structured JSON to the frontend
+  } catch (error) {
+    console.error('Error processing request:', error);
+    res.status(500).json({ error: 'Failed to process the request' });
+  }
 });
+
 
 
 app.post('/recyclingMethods', async (req, res) => {
