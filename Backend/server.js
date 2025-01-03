@@ -109,8 +109,14 @@ app.post('/metricsImage', async (req, res) => {
   `;
 
     const result = await model.generateContent([prompt ]);
+    const cleanedResponse = result.response.text()
+  .replaceAll('```', '')
+  .replaceAll('json', '');
+  console.log(cleanedResponse);
+  // console.log(result.response.text());
+  res.json(cleanedResponse);
+  
 
-   res.send(result.response.text());
 });
 
 
@@ -141,8 +147,14 @@ app.post('/recyclingMethods', async (req, res) => {
   try {
     const result = await model.generateContent([
       prompt]);
-
-    res.send(result.response.text());
+      const cleanedResponse = result.response.text()
+  .replaceAll('```', '')
+  .replaceAll('json', '');
+  console.log(cleanedResponse);
+  // console.log(result.response.text());
+  
+res.json(cleanedResponse);
+ 
   } catch (error) {
     console.error('Error generating recycling methods:', error);
     res.status(500).json({ error: 'Failed to generate recycling methods.' });
