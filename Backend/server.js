@@ -113,6 +113,7 @@ app.post('/metricsImage', async (req, res) => {
    res.send(result.response.text());
 });
 
+
 app.post('/recyclingMethods', async (req, res) => {
   const { name, size, type, material, cost } = req.body;
 
@@ -138,11 +139,9 @@ app.post('/recyclingMethods', async (req, res) => {
   `;
 
   try {
-    // Call the model's generateContent function
     const result = await model.generateContent([
       prompt]);
 
-    // Return the result as JSON
     res.send(result.response.text());
   } catch (error) {
     console.error('Error generating recycling methods:', error);
