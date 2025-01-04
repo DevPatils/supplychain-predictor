@@ -66,6 +66,8 @@ const productSchema = new mongoose.Schema(
 
 export const Product = mongoose.model('Product', productSchema);
 
+
+
 // Onboard route (generate userSellerID)
 router.post('/onboard', async (req, res) => {
     try {
@@ -101,6 +103,32 @@ router.post('/onboard', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error onboarding user', error: err.message });
+    }
+});
+
+router.post('/login', async (req, res) => {
+    try {
+        const { walletAddress } = req.body;
+
+        if (!walletAddress) {
+            return res.status(400).json({ message: 'Wallet address is required' });
+        }
+
+        const user = await User.findOne({ walletAddress });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const token = jwt.sign({ userId: user._id }, 'your_secret_key');
+
+        res.json({
+            message: 'User logged in successfully',
+            user,
+            token,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error logging in', error: err.message });
     }
 });
 
@@ -151,6 +179,64 @@ router.post('/product', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Error adding product', error: err.message });
+    }
+});
+
+
+
+router.get('/all-products', async (req, res) => {
+    try {
+        const products = await Product.find().populate('seller');
+        res.json({
+            products,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error fetching products', error: err.message });
+    }
+});
+router.get('/companies', async (req, res) => {
+    try {
+        const companies = await User.find();
+        res.json({
+            companies,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error fetching companies', error: err.message });
+    }
+});
+
+
+// Add predefined local Indian companies
+const predefinedCompanies = [
+    {
+        userSellerID: 'SELLER_1234567890_001',
+        name: 'RYM Energy',
+        walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+    },
+    {
+        userSellerID: 'SELLER_1234567890_002',
+        name: 'Kalp Studio',
+        walletAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
+    },
+    {
+        userSellerID: 'SELLER_1234567890_003',
+        name: 'GKM Energy Pvt. Ltd',
+        walletAddress: '0x7890abcdef1234567890abcdef1234567890abcd',
+    },
+];
+
+predefinedCompanies.forEach(async (company) => {
+    try {
+        const existingCompany = await User.findOne({ userSellerID: company.userSellerID });
+        if (!existingCompany) {
+            const newCompany = new User(company);
+            await newCompany.save();
+            console.log(`Company ${company.name} added successfully`);
+        }
+    } catch (err) {
+        console.error(`Error adding company ${company.name}`, err);
     }
 });
 
