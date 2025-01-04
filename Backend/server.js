@@ -7,6 +7,7 @@ import passport from './passportConfig.js';
 import cors from 'cors';
 import connectDB from './dbconfig.js';
 import { userRouter } from './routes/User.js';
+import marketrouter from './routes/userMarket.js';
 
 
 const app = express();
@@ -208,6 +209,7 @@ res.json(cleanedResponse);
 
 
 app.use("/user", userRouter);
+app.use('/market',marketrouter);
 
 
 
