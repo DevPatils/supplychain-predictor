@@ -1,6 +1,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -114,11 +115,24 @@ router.post('/product', async (req, res) => {
             return res.status(404).json({ message: 'Seller not found' });
         }
 
+        // Convert image paths to Base64 strings
+        const imagesBase64 = await Promise.all(
+            images.map(async (imagePath) => {
+                try {
+                    const imageBuffer = fs.readFileSync(imagePath); // Read the file
+                    return `data:image/${imagePath.split('.').pop()};base64,${imageBuffer.toString('base64')}`;
+                } catch (error) {
+                    console.error(`Error reading image file: ${imagePath}`, error);
+                    throw new Error(`Could not process image: ${imagePath}`);
+                }
+            })
+        );
+
         // Create a new product
         const newProduct = new Product({
             name,
             description,
-            images,
+            images: imagesBase64,
             supply,
             price,
             seller: seller._id,
