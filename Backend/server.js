@@ -188,21 +188,29 @@ app.post('/recyclingMethods', async (req, res) => {
   `;
 
   try {
-    const result = await model.generateContent([
-      prompt]);
-      const cleanedResponse = result.response.text()
-  .replaceAll('```', '')
-  .replaceAll('json', '');
-  console.log(cleanedResponse);
-  // console.log(result.response.text());
-  
-res.json(cleanedResponse);
- 
+    const result = await model.generateContent([prompt]);
+
+    // Clean and parse the response into JSON
+    const cleanedResponse = result.response.text()
+      .replaceAll('```', '') // Remove code block syntax
+      .replaceAll('json', '') // Remove any 'json' markers if present
+      .trim(); // Remove unwanted spaces or newline characters
+
+    // Log cleaned response for debugging
+    console.log(cleanedResponse);
+
+    // Attempt to parse the cleaned response into JSON
+    const jsonResponse = JSON.parse(cleanedResponse);
+
+    // Send the structured JSON to the frontend
+    res.json(jsonResponse);
+
   } catch (error) {
     console.error('Error generating recycling methods:', error);
     res.status(500).json({ error: 'Failed to generate recycling methods.' });
   }
 });
+
 
 
 
